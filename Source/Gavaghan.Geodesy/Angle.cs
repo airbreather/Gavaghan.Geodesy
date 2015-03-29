@@ -8,186 +8,228 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
+using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
 {
-  /// <summary>
-  /// Encapsulation of an Angle.  Angles are constructed and serialized in
-  /// degrees for human convenience, but a conversion to radians is provided
-  /// for mathematical calculations.
-  /// 
-  /// Angle comparisons are performed in absolute terms - no "wrapping" occurs.
-  /// In other words, 360 degress != 0 degrees.
-  /// </summary>
-  [Serializable]
-  public struct Angle : IComparable<Angle>
-  {
-    /// <summary>Degrees/Radians conversion constant.</summary>
-    private const double PiOver180 = Math.PI / 180.0;
-
-    /// <summary>Angle value in degrees.</summary>
-    private double mDegrees;
-
-    /// <summary>Zero Angle</summary>
-    static public readonly Angle Zero = new Angle(0);
-
-    /// <summary>180 degree Angle</summary>
-    static public readonly Angle Angle180 = new Angle(180);
-
     /// <summary>
-    /// Construct a new Angle from a degree measurement.
+    /// Encapsulation of an Angle.
+    /// Angle comparisons are performed in absolute terms - no "wrapping" occurs.
+    /// In other words, 360 degress != 0 degrees.
     /// </summary>
-    /// <param name="degrees">angle measurement</param>
-    public Angle(double degrees)
+    [Serializable]
+    public struct Angle : IComparable<Angle>, IComparable, IEquatable<Angle>, ISerializable
     {
-      mDegrees = degrees;
+        /// <summary>Zero Angle</summary>
+        public static readonly Angle Zero = new Angle(0);
+
+        /// <summary>180 degree Angle</summary>
+        public static readonly Angle Angle180 = Angle.FromRadians(Math.PI);
+
+        /// <summary>NaN-valued Angle</summary>
+        public static readonly Angle NaN = Angle.FromRadians(Double.NaN);
+
+        /// <summary>Degrees/Radians conversion constant.</summary>
+        private const double PiOver180 = Math.PI / 180;
+
+        // intentionally NOT readonly, for performance reasons.
+        /// <summary>Angle value in radians.</summary>
+        private double radians;
+
+        /// <summary>
+        /// Construct a new Angle from a measurement in radians.
+        /// </summary>
+        /// <param name="degrees">angle measurement</param>
+        private Angle(double radians)
+        {
+            this.radians = radians;
+        }
+
+        /// <summary>
+        /// Get angle measured in degrees.
+        /// </summary>
+        public double Degrees
+        {
+            get { return this.radians / PiOver180; }
+        }
+
+        /// <summary>
+        /// Get angle measured in radians.
+        /// </summary>
+        public double Radians
+        {
+            get { return this.radians; }
+        }
+
+        public static Angle FromRadians(double radians)
+        {
+            return new Angle(radians);
+        }
+
+        public static Angle FromDegrees(double degrees)
+        {
+            return new Angle(degrees * PiOver180);
+        }
+
+        public static Angle FromDegreesAndMinutes(int degrees, double minutes)
+        {
+            double d = minutes / 60;
+            d = degrees < 0 ? degrees - d : degrees + d;
+
+            return new Angle(d * PiOver180);
+        }
+
+        public static Angle FromDegreesMinutesAndSeconds(int degrees, int minutes, double seconds)
+        {
+            double d = (seconds / 3600) + (minutes / 60.0);
+            d = degrees < 0 ? degrees - d : degrees + d;
+
+            return new Angle(d * PiOver180);
+        }
+
+        /// <summary>
+        /// Get the absolute value of the angle.
+        /// </summary>
+        public static Angle Abs(Angle angle)
+        {
+            double r = Math.Abs(angle.radians);
+            return new Angle(r);
+        }
+
+        public static bool IsNaN(Angle angle)
+        {
+            return Double.IsNaN(angle.radians);
+        }
+
+        /// <summary>
+        /// Compare this angle to another angle.
+        /// </summary>
+        /// <param name="obj">other angle to compare to.</param>
+        /// <returns>result according to IComparable contract/></returns>
+        public int CompareTo(object obj)
+        {
+            if (!(obj is Angle))
+            {
+                throw new ArgumentException("Can only compare Angles with other Angles.", "obj");
+            }
+
+            return this.CompareTo((Angle)obj);
+        }
+
+        /// <summary>
+        /// Compare this angle to another angle.
+        /// </summary>
+        /// <param name="other">other angle to compare to.</param>
+        /// <returns>result according to IComparable contract/></returns>
+        public int CompareTo(Angle other)
+        {
+            return this.radians.CompareTo(other.radians);
+        }
+
+        /// <summary>
+        /// Calculate a hash code for the angle.
+        /// </summary>
+        /// <returns>hash code</returns>
+        public override int GetHashCode()
+        {
+            return this.radians.GetHashCode();
+        }
+
+        /// <summary>
+        /// Compare this Angle to another Angle for equality.  Angle comparisons
+        /// are performed in absolute terms - no "wrapping" occurs.  In other
+        /// words, 360 degress != 0 degrees.
+        /// </summary>
+        /// <param name="obj">object to compare to</param>
+        /// <returns>'true' if angles are equal</returns>
+        public override bool Equals(object obj)
+        {
+            return obj is Angle &&
+                   this.Equals((Angle)obj);
+        }
+
+        /// <summary>
+        /// Compare this Angle to another Angle for equality.
+        /// Equality is defined in absolute terms.
+        /// i.e., a zero-degree angle does not equal a 360-degree angle.
+        /// Use Normalize for that.
+        /// </summary>
+        /// <param name="other">Angle to compare to</param>
+        /// <returns>'true' if angles are equal</returns>
+        public bool Equals(Angle other)
+        {
+            return this.radians == other.radians;
+        }
+
+        /// <summary>
+        /// Get coordinates as a string.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return String.Format(CultureInfo.InvariantCulture,
+                                 "Angle[Degrees={0}, Radians={1}]",
+                                 this.Degrees,
+                                 this.radians);
+        }
+
+        #region Serialization / Deserialization
+
+        private Angle(SerializationInfo info, StreamingContext context)
+        {
+            this.radians = info.GetDouble("radians");
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("radians", this.radians);
+        }
+
+        #endregion
+
+        #region Operators
+
+        public static Angle operator +(Angle lhs, Angle rhs)
+        {
+            return new Angle(lhs.radians + rhs.radians);
+        }
+
+        public static Angle operator -(Angle lhs, Angle rhs)
+        {
+            return new Angle(lhs.radians - rhs.radians);
+        }
+
+        public static bool operator ==(Angle lhs, Angle rhs)
+        {
+            return lhs.radians == rhs.radians;
+        }
+
+        public static bool operator !=(Angle lhs, Angle rhs)
+        {
+            return lhs.radians != rhs.radians;
+        }
+
+        public static bool operator <(Angle lhs, Angle rhs)
+        {
+            return lhs.radians < rhs.radians;
+        }
+
+        public static bool operator <=(Angle lhs, Angle rhs)
+        {
+            return lhs.radians <= rhs.radians;
+        }
+
+        public static bool operator >(Angle lhs, Angle rhs)
+        {
+            return lhs.radians > rhs.radians;
+        }
+
+        public static bool operator >=(Angle lhs, Angle rhs)
+        {
+            return lhs.radians >= rhs.radians;
+        }
+
+        #endregion
     }
-
-    /// <summary>
-    /// Construct a new Angle from degrees and minutes.
-    /// </summary>
-    /// <param name="degrees">degree portion of angle measurement</param>
-    /// <param name="minutes">minutes portion of angle measurement (0 <= minutes < 60)</param>
-    public Angle(int degrees, double minutes)
-    {
-      mDegrees = minutes / 60.0;
-
-      mDegrees = (degrees < 0) ? (degrees - mDegrees) : (degrees + mDegrees);
-    }
-
-    /// <summary>
-    /// Construct a new Angle from degrees, minutes, and seconds.
-    /// </summary>
-    /// <param name="degrees">degree portion of angle measurement</param>
-    /// <param name="minutes">minutes portion of angle measurement (0 <= minutes < 60)</param>
-    /// <param name="seconds">seconds portion of angle measurement (0 <= seconds < 60)</param>
-    public Angle(int degrees, int minutes, double seconds)
-    {
-      mDegrees = (seconds / 3600.0) + (minutes / 60.0);
-
-      mDegrees = (degrees < 0) ? (degrees - mDegrees) : (degrees + mDegrees);
-    }
-
-    /// <summary>
-    /// Get/set angle measured in degrees.
-    /// </summary>
-    public double Degrees
-    {
-      get { return mDegrees; }
-      set { mDegrees = value; }
-    }
-
-    /// <summary>
-    /// Get/set angle measured in radians.
-    /// </summary>
-    public double Radians
-    {
-      get { return mDegrees * PiOver180; }
-      set { mDegrees = value / PiOver180; }
-    }
-
-    /// <summary>
-    /// Get the absolute value of the angle.
-    /// </summary>
-    public Angle Abs()
-    {
-      return new Angle(Math.Abs(mDegrees));
-    }
-
-    /// <summary>
-    /// Compare this angle to another angle.
-    /// </summary>
-    /// <param name="other">other angle to compare to.</param>
-    /// <returns>result according to IComparable contract/></returns>
-    public int CompareTo(Angle other)
-    {
-      return mDegrees.CompareTo(other.mDegrees);
-    }
-
-    /// <summary>
-    /// Calculate a hash code for the angle.
-    /// </summary>
-    /// <returns>hash code</returns>
-    public override int GetHashCode()
-    {
-      return (int) (mDegrees * 1000033);
-    }
-
-    /// <summary>
-    /// Compare this Angle to another Angle for equality.  Angle comparisons
-    /// are performed in absolute terms - no "wrapping" occurs.  In other
-    /// words, 360 degress != 0 degrees.
-    /// </summary>
-    /// <param name="obj">object to compare to</param>
-    /// <returns>'true' if angles are equal</returns>
-    public override bool Equals(object obj)
-    {
-      if (!(obj is Angle)) return false;
-
-      Angle other = (Angle)obj;
-
-      return mDegrees == other.mDegrees;
-    }
-
-    /// <summary>
-    /// Get coordinates as a string.
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-      return mDegrees.ToString();
-    }
-
-    #region Operators
-    public static Angle operator +(Angle lhs, Angle rhs)
-    {
-      return new Angle(lhs.mDegrees + rhs.mDegrees);
-    }
-
-    public static Angle operator -(Angle lhs, Angle rhs)
-    {
-      return new Angle(lhs.mDegrees - rhs.mDegrees);
-    }
-
-    public static bool operator >(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees > rhs.mDegrees;
-    }
-
-    public static bool operator >=(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees >= rhs.mDegrees;
-    }
-
-    public static bool operator <(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees < rhs.mDegrees;
-    }
-
-    public static bool operator <=(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees <= rhs.mDegrees;
-    }
-
-    public static bool operator ==(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees == rhs.mDegrees;
-    }
-
-    public static bool operator !=(Angle lhs, Angle rhs)
-    {
-      return lhs.mDegrees != rhs.mDegrees;
-    }
-
-    /// <summary>
-    /// Imlplicity cast a double as an Angle measured in degrees.
-    /// </summary>
-    /// <param name="degrees">angle in degrees</param>
-    /// <returns>double cast as an Angle</returns>
-    public static implicit operator Angle(double degrees)
-    {
-      return new Angle(degrees);
-    }
-    #endregion
-  }
 }

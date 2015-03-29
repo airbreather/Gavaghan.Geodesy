@@ -8,105 +8,168 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Text;
+using System.Globalization;
+using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
 {
-  /// <summary>
-  /// This is the outcome of a three dimensional geodetic calculation.  It represents
-  /// the path a between two GlobalPositions for a specified reference ellipsoid.
-  /// </summary>
-  [Serializable]
-  public struct GeodeticMeasurement
-  {
-    /// <summary>The average geodetic curve.</summary>
-    private readonly GeodeticCurve mCurve;
-
-    /// <summary>The elevation change, in meters, going from the starting to the ending point.</summary>
-    private readonly double mElevationChange;
-
-    /// <summary>The distance travelled, in meters, going from one point to the next.</summary>
-    private readonly double mP2P;
-
     /// <summary>
-    /// Creates a new instance of GeodeticMeasurement.
+    /// This is the outcome of a three dimensional geodetic calculation.  It represents
+    /// the path a between two GlobalPositions for a specified reference ellipsoid.
     /// </summary>
-    /// <param name="averageCurve">the geodetic curve as measured at the average elevation between two points</param>
-    /// <param name="elevationChange">the change in elevation, in meters, going from the starting point to the ending point</param>
-    public GeodeticMeasurement(GeodeticCurve averageCurve, double elevationChange)
+    [Serializable]
+    public struct GeodeticMeasurement : IEquatable<GeodeticMeasurement>, ISerializable
     {
-      double ellDist = averageCurve.EllipsoidalDistance;
+        // intentionally NOT readonly, for performance reasons.
+        /// <summary>The average geodetic curve.</summary>
+        private GeodeticCurve averageCurve;
 
-      mCurve = averageCurve;
-      mElevationChange = elevationChange;
-      mP2P = Math.Sqrt(ellDist * ellDist + mElevationChange * mElevationChange);
+        // intentionally NOT readonly, for performance reasons.
+        /// <summary>The elevation change, in meters, going from the starting to the ending point.</summary>
+        private double elevationChangeMeters;
+
+        // intentionally NOT readonly, for performance reasons.
+        /// <summary>The distance travelled, in meters, going from one point to the next.</summary>
+        private double p2pMeters;
+
+        /// <summary>
+        /// Creates a new instance of GeodeticMeasurement.
+        /// </summary>
+        /// <param name="averageCurve">the geodetic curve as measured at the average elevation between two points</param>
+        /// <param name="elevationChangeMeters">the change in elevation, in meters, going from the starting point to the ending point</param>
+        public GeodeticMeasurement(GeodeticCurve averageCurve, double elevationChangeMeters)
+        {
+            double ellipsoidalDistanceMeters = averageCurve.EllipsoidalDistanceMeters;
+
+            this.averageCurve = averageCurve;
+            this.elevationChangeMeters = elevationChangeMeters;
+            this.p2pMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
+        }
+
+        /// <summary>
+        /// Get the average geodetic curve.  This is the geodetic curve as measured
+        /// at the average elevation between two points.
+        /// </summary>
+        public GeodeticCurve AverageCurve
+        {
+            get { return averageCurve; }
+        }
+
+        /// <summary>
+        /// Get the ellipsoidal distance (in meters).  This is the length of the average geodetic
+        /// curve.  For actual point-to-point distance, use PointToPointDistance property.
+        /// </summary>
+        public double EllipsoidalDistanceMeters
+        {
+            get { return averageCurve.EllipsoidalDistanceMeters; }
+        }
+
+        /// <summary>
+        /// Get the azimuth.  This is angle from north from start to end.
+        /// </summary>
+        public Angle Azimuth
+        {
+            get { return averageCurve.Azimuth; }
+        }
+
+        /// <summary>
+        /// Get the reverse azimuth.  This is angle from north from end to start.
+        /// </summary>
+        public Angle ReverseAzimuth
+        {
+            get { return averageCurve.ReverseAzimuth; }
+        }
+
+        /// <summary>
+        /// Get the elevation change, in meters, going from the starting to the ending point.
+        /// </summary>
+        public double ElevationChangeMeters
+        {
+            get { return elevationChangeMeters; }
+        }
+
+        /// <summary>
+        /// Get the distance travelled, in meters, going from one point to the next.
+        /// </summary>
+        public double PointToPointDistanceMeters
+        {
+            get { return p2pMeters; }
+        }
+
+        public override int GetHashCode()
+        {
+            // p2p is a derived metric, no need to test.
+            int hashCode = 17;
+
+            hashCode = hashCode * 31 + this.averageCurve.GetHashCode();
+            hashCode = hashCode * 31 + this.elevationChangeMeters.GetHashCode();
+
+            return hashCode;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is GeodeticMeasurement &&
+                   this.Equals((GeodeticMeasurement)obj);
+        }
+
+        public bool Equals(GeodeticMeasurement other)
+        {
+            // p2p is a derived metric, no need to test.
+            return this.averageCurve == other.averageCurve &&
+                   this.elevationChangeMeters == other.elevationChangeMeters;
+        }
+
+        /// <summary>
+        /// Get the GeodeticMeasurement as a string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return String.Format(CultureInfo.InvariantCulture,
+                                 "GeodeticMeasurement[AverageCurve={0}, ElevationChangeMeters={1}, PointToPointDistanceMeters={2}]",
+                                 this.averageCurve,
+                                 this.elevationChangeMeters,
+                                 this.p2pMeters);
+        }
+
+        #region Serialization / Deserialization
+
+        private GeodeticMeasurement(SerializationInfo info, StreamingContext context)
+        {
+            this.elevationChangeMeters = info.GetDouble("elevationChangeMeters");
+
+            double ellipsoidalDistanceMeters = info.GetDouble("averageCurveEllipsoidalDistanceMeters");
+            double azimuthRadians = info.GetDouble("averageCurveAzimuthRadians");
+            double reverseAzimuthRadians = info.GetDouble("averageCurveReverseAzimuthRadians");
+
+            this.averageCurve = new GeodeticCurve(ellipsoidalDistanceMeters, Angle.FromRadians(azimuthRadians), Angle.FromRadians(reverseAzimuthRadians));
+            this.p2pMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
+        }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("elevationChangeMeters", this.elevationChangeMeters);
+
+            info.AddValue("averageCurveEllipsoidalDistanceMeters", this.averageCurve.EllipsoidalDistanceMeters);
+            info.AddValue("averageCurveAzimuthRadians", this.averageCurve.Azimuth.Radians);
+            info.AddValue("averageCurveReverseAzimuthRadians", this.averageCurve.ReverseAzimuth.Radians);
+        }
+
+        #endregion
+
+        #region Operators
+
+        public static bool operator ==(GeodeticMeasurement lhs, GeodeticMeasurement rhs)
+        {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(GeodeticMeasurement lhs, GeodeticMeasurement rhs)
+        {
+            return !lhs.Equals(rhs);
+        }
+
+        #endregion
     }
-
-    /// <summary>
-    /// Get the average geodetic curve.  This is the geodetic curve as measured
-    /// at the average elevation between two points.
-    /// </summary>
-    public GeodeticCurve AverageCurve
-    {
-      get { return mCurve; }
-    }
-
-    /// <summary>
-    /// Get the ellipsoidal distance (in meters).  This is the length of the average geodetic
-    /// curve.  For actual point-to-point distance, use PointToPointDistance property.
-    /// </summary>
-    public double EllipsoidalDistance
-    {
-      get { return mCurve.EllipsoidalDistance; }
-    }
-
-    /// <summary>
-    /// Get the azimuth.  This is angle from north from start to end.
-    /// </summary>
-    public Angle Azimuth
-    {
-      get { return mCurve.Azimuth; }
-    }
-
-    /// <summary>
-    /// Get the reverse azimuth.  This is angle from north from end to start.
-    /// </summary>
-    public Angle ReverseAzimuth
-    {
-      get { return mCurve.ReverseAzimuth; }
-    }
-
-    /// <summary>
-    /// Get the elevation change, in meters, going from the starting to the ending point.
-    /// </summary>
-    public double ElevationChange
-    {
-      get { return mElevationChange; }
-    }
-
-    /// <summary>
-    /// Get the distance travelled, in meters, going from one point to the next.
-    /// </summary>
-    public double PointToPointDistance
-    {
-      get { return mP2P; }
-    }
-
-    /// <summary>
-    /// Get the GeodeticMeasurement as a string
-    /// </summary>
-    /// <returns></returns>
-    public override string ToString()
-    {
-      StringBuilder builder = new StringBuilder();
-
-      builder.Append(mCurve.ToString());
-      builder.Append(";elev12=");
-      builder.Append(mElevationChange);
-      builder.Append(";p2p=");
-      builder.Append(mP2P);
-
-      return builder.ToString();
-    }
-  }
 }

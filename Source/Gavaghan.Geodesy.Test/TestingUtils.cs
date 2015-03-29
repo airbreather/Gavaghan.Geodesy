@@ -8,25 +8,38 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Collections.Generic;
-using System.Text;
+
+using NUnit.Framework;
 
 namespace Gavaghan.Geodesy.Test
 {
-  public static class TestingUtils
-  {
-    /// <summary>
-    /// Compare two floating point values for equality within a tolerance.
-    /// </summary>
-    /// <param name="value1"></param>
-    /// <param name="value2"></param>
-    /// <returns></returns>
-    public static bool AreEqualWithinTolerance( double value1, double value2 )
+    public static class TestingUtils
     {
-      double difference = Math.Abs(value1 - value2);
-      double error = difference / value1;
+        /// <summary>
+        /// Compare two floating point values for equality within a tolerance.
+        /// </summary>
+        /// <param name="expected"></param>
+        /// <param name="actual"></param>
+        /// <returns></returns>
+        public static void AssertEqualityWithinExtremeTolerance(double expected, double actual)
+        {
+            if (Double.IsNaN(expected) || Double.IsNaN(actual))
+            {
+                Assert.Fail("NaN values are never equal to other NaN values.  Expected: {0}, Actual: {1}", expected, actual);
+            }
 
-      return error < 0.000001;
+            long value1Bits = BitConverter.DoubleToInt64Bits(expected);
+            long value2Bits = BitConverter.DoubleToInt64Bits(actual);
+
+            // Math.Abs(value1Bits - value2Bits) could easily overflow where it needn't.
+            long steps = value1Bits < value2Bits
+                ? value2Bits - value1Bits
+                : value1Bits - value2Bits;
+
+            // TODO: 6 is higher than I expected to need.  I expected 2ish.  Ideally, it would be 0,
+            // but that may be impossible without requiring additional storage space.
+            const long MaxAbsoluteDifference = 6;
+            Assert.LessOrEqual(steps, MaxAbsoluteDifference, "Expected: {0}, Actual: {1}", expected, actual);
+        }
     }
-  }
 }

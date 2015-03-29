@@ -8,103 +8,80 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
+
 using NUnit.Framework;
-using Gavaghan.Geodesy;
 
 namespace Gavaghan.Geodesy.Test
 {
-  [TestFixture]
-  public class GlobalCoordinatesTest
-  {
-    [Test]
-    public void CornerCaseForLatitude()
+    [TestFixture]
+    public class GlobalCoordinatesTest
     {
-      Angle latitude = new Angle(100);
-      Angle longitude = new Angle(1000);
-      GlobalCoordinates coords = new GlobalCoordinates(latitude, longitude);
-      coords.Longitude = 0.0;
-      coords.Latitude = -360.0;
-      Assert.IsTrue(Math.Abs(coords.Latitude.Degrees - 0) < 1e-6);
-      Assert.IsTrue(Math.Abs(coords.Longitude.Degrees - 0) < 1e-6);
+        [Test]
+        public void CanonicalizeLatitude()
+        {
+            Angle latitude = Angle.FromDegrees(30);
+            Angle longitude = Angle.FromDegrees(20);
+            GlobalCoordinates coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Radians, coords.Latitude.Radians);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Radians, coords.Longitude.Radians);
 
-      coords = new GlobalCoordinates(latitude, longitude);
-      coords.Longitude = 180.0;
-      coords.Latitude = -360.0;
-      Assert.IsTrue(Math.Abs(coords.Latitude.Degrees - 0) < 1e-6);
-      Assert.IsTrue(Math.Abs(coords.Longitude.Degrees - 180) < 1e-6);
+            latitude = Angle.FromDegrees(100);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(80, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-160, coords.Longitude.Degrees);
 
-      coords.Longitude = 0.0;
-      coords.Latitude = 100.0;
-      coords.Latitude = -360.0;
-      Assert.IsTrue(Math.Abs(coords.Latitude.Degrees - 0) < 1e-6);
-      Assert.IsTrue(Math.Abs(coords.Longitude.Degrees - 180) < 1e-6);
+            latitude = Angle.FromDegrees(-100);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-80, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-160, coords.Longitude.Degrees);
+
+            latitude = Angle.FromDegrees(200);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-20, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-160, coords.Longitude.Degrees);
+
+            latitude = Angle.FromDegrees(280);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-80, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Radians, coords.Longitude.Radians);
+
+            latitude = Angle.FromDegrees(-200);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(20, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-160, coords.Longitude.Degrees);
+        }
+
+        [Test]
+        public void CanonicalizeLongitude()
+        {
+            Angle latitude = Angle.FromDegrees(30);
+            Angle longitude = Angle.FromDegrees(20);
+            GlobalCoordinates coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Degrees, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Degrees, coords.Longitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Radians, coords.Latitude.Radians);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Radians, coords.Longitude.Radians);
+
+            longitude = Angle.FromDegrees(160);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Degrees, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Degrees, coords.Longitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Radians, coords.Latitude.Radians);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(longitude.Radians, coords.Longitude.Radians);
+
+            longitude = Angle.FromDegrees(200);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Degrees, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(-160, coords.Longitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Radians, coords.Latitude.Radians);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(Angle.FromDegrees(-160).Radians, coords.Longitude.Radians);
+
+            longitude = Angle.FromDegrees(-200);
+            coords = new GlobalCoordinates(latitude, longitude);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Degrees, coords.Latitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(160, coords.Longitude.Degrees);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(latitude.Radians, coords.Latitude.Radians);
+            TestingUtils.AssertEqualityWithinExtremeTolerance(Angle.FromDegrees(160).Radians, coords.Longitude.Radians);
+        }
     }
-
-    [Test]
-    public void CanonicalizeLatitude()
-    {
-      Angle latitude = new Angle(30);
-      Angle longitude = new Angle(20);
-      GlobalCoordinates coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, latitude);
-      Assert.AreEqual(coords.Longitude, longitude);
-
-      latitude = new Angle(100);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, new Angle(80));
-      Assert.AreEqual(coords.Longitude, new Angle(-160));
-
-      latitude = new Angle(-100);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, new Angle(-80));
-      Assert.AreEqual(coords.Longitude, new Angle(-160));
-
-      latitude = new Angle(200);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, new Angle(-20));
-      Assert.AreEqual(coords.Longitude, new Angle(-160));
-
-      latitude = new Angle(280);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, new Angle(-80));
-      Assert.AreEqual(coords.Longitude, longitude);
-
-      latitude = new Angle(-200);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, new Angle(20));
-      Assert.AreEqual(coords.Longitude, new Angle(-160));
-
-      latitude = new Angle(100);
-      longitude = new Angle(1000);
-      coords = new GlobalCoordinates(latitude, longitude);
-      coords.Longitude = 0.0;
-      coords.Latitude = -359.0;
-      Assert.IsTrue(Math.Abs(coords.Latitude.Degrees - 1.0) < 1e-6);
-    }
-
-    [Test]
-    public void CanonicalizeLongitude()
-    {
-      Angle latitude = new Angle(30);
-      Angle longitude = new Angle(20);
-      GlobalCoordinates coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, latitude);
-      Assert.AreEqual(coords.Longitude, longitude);
-
-      longitude = new Angle(160);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, latitude);
-      Assert.AreEqual(coords.Longitude, longitude);
-
-      longitude = new Angle(200);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, latitude);
-      Assert.AreEqual(coords.Longitude, new Angle(-160));
-
-      longitude = new Angle(-200);
-      coords = new GlobalCoordinates(latitude, longitude);
-      Assert.AreEqual(coords.Latitude, latitude);
-      Assert.AreEqual(coords.Longitude, new Angle(160));
-    }
-  }
 }
