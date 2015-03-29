@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gavaghan.Geodesy", "Gavaghan.Geodesy\Gavaghan.Geodesy.csproj", "{FEF5CAD3-7F38-4801-849E-2F4F94607ABD}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gavaghan.Geodesy.Test", "Gavaghan.Geodesy.Test\Gavaghan.Geodesy.Test.csproj", "{8E5229A7-217B-4159-BB2A-1E81BA851540}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gavaghan.Geodesy.Example", "Gavaghan.Geodesy.Example\Gavaghan.Geodesy.Example.csproj", "{0942D5D9-4FF6-43DD-9D40-E34B32EC8D98}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FEF5CAD3-7F38-4801-849E-2F4F94607ABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEF5CAD3-7F38-4801-849E-2F4F94607ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEF5CAD3-7F38-4801-849E-2F4F94607ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEF5CAD3-7F38-4801-849E-2F4F94607ABD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E5229A7-217B-4159-BB2A-1E81BA851540}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E5229A7-217B-4159-BB2A-1E81BA851540}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E5229A7-217B-4159-BB2A-1E81BA851540}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E5229A7-217B-4159-BB2A-1E81BA851540}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0942D5D9-4FF6-43DD-9D40-E34B32EC8D98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0942D5D9-4FF6-43DD-9D40-E34B32EC8D98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0942D5D9-4FF6-43DD-9D40-E34B32EC8D98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0942D5D9-4FF6-43DD-9D40-E34B32EC8D98}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
