@@ -25,7 +25,7 @@ namespace Gavaghan.Geodesy.Test
         {
             if (Double.IsNaN(expected) || Double.IsNaN(actual))
             {
-                Assert.Fail("NaN values are never equal to other NaN values.  Expected: {0}, Actual: {1}", expected, actual);
+                Assert.Fail("NaN values are never equal to other values.  Expected: {0}, Actual: {1}", expected, actual);
             }
 
             long value1Bits = BitConverter.DoubleToInt64Bits(expected);

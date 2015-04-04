@@ -82,7 +82,7 @@ namespace Gavaghan.Geodesy
             // gets bigger and bigger, until you reach the North Pole.  You've now walked from -90
             // to 90, and mathematically, that's as high as latitude can go.  However, you're
             // completely capable of continuing to walk in that same straight line.  A little
-            // farther (relatively speaking), and you've walked 181 degrees of longitude, but now
+            // farther (relatively speaking), and you've walked 181 degrees of latitude, but now
             // you're walking on the opposite meridian.
             double latitudeRadians = this.latitude.Radians;
             double longitudeRadians = this.longitude.Radians;
