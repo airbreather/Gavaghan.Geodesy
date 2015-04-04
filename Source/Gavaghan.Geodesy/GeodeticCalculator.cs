@@ -127,8 +127,9 @@ namespace Gavaghan.Geodesy
             sinSigma = Math.Sin(sigma);
 
             // eq. 8
+            double sinU1sinSigma_cosU1cosSigmacosAlpha1 = sinU1 * sinSigma - cosU1 * cosSigma * cosAlpha1;
             double phi2 = Math.Atan2(sinU1 * cosSigma + cosU1 * sinSigma * cosAlpha1,
-                                     (1.0 - f) * Math.Sqrt(sin2Alpha + Math.Pow(sinU1 * sinSigma - cosU1 * cosSigma * cosAlpha1, 2.0)));
+                                     (1.0 - f) * Math.Sqrt(sin2Alpha + (sinU1sinSigma_cosU1cosSigmacosAlpha1 * sinU1sinSigma_cosU1cosSigmacosAlpha1)));
 
             // eq. 9
             // This fixes the pole crossing defect spotted by Matt Feemster.  When a path
@@ -230,7 +231,8 @@ namespace Gavaghan.Geodesy
                 double coslambda = Math.Cos(lambda);
 
                 // eq. 14
-                double sin2sigma = (cosU2 * sinlambda * cosU2 * sinlambda) + Math.Pow(cosU1sinU2 - sinU1cosU2 * coslambda, 2.0);
+                double cosU1sinU2_sinU2cosU2coslambda = cosU1sinU2 - sinU1cosU2 * coslambda;
+                double sin2sigma = (cosU2 * sinlambda * cosU2 * sinlambda) + (cosU1sinU2_sinU2cosU2coslambda * cosU1sinU2_sinU2cosU2coslambda);
                 double sinsigma = Math.Sqrt(sin2sigma);
 
                 // eq. 15
@@ -266,10 +268,15 @@ namespace Gavaghan.Geodesy
                 // eq. 11 (modified)
                 lambda = omega + (1 - C) * f * sinalpha * (sigma + C * sinsigma * (cos2sigmam + C * cossigma * (-1 + 2 * cos2sigmam2)));
 
+                if (i < 2)
+                {
+                    continue;
+                }
+
                 // see how much improvement we got
                 double change = Math.Abs((lambda - lambda0) / lambda);
 
-                if ((i > 1) && (change < StandardTolerance))
+                if (change < tolerance)
                 {
                     converged = true;
                     break;
