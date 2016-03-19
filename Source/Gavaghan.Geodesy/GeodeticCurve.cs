@@ -21,18 +21,6 @@ namespace Gavaghan.Geodesy
     [Serializable]
     public struct GeodeticCurve : IEquatable<GeodeticCurve>, ISerializable
     {
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Ellipsoidal distance (in meters).</summary>
-        private double ellipsoidalDistanceMeters;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Azimuth (degrees from north).</summary>
-        private Angle azimuth;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Reverse azimuth (degrees from north).</summary>
-        private Angle reverseAzimuth;
-
         /// <summary>
         /// Create a new GeodeticCurve.
         /// </summary>
@@ -41,105 +29,77 @@ namespace Gavaghan.Geodesy
         /// <param name="reverseAzimuth">reverse azimuth in degrees</param>
         public GeodeticCurve(double ellipsoidalDistanceMeters, Angle azimuth, Angle reverseAzimuth)
         {
-            this.ellipsoidalDistanceMeters = ellipsoidalDistanceMeters;
-            this.azimuth = azimuth;
-            this.reverseAzimuth = reverseAzimuth;
+            this.EllipsoidalDistanceMeters = ellipsoidalDistanceMeters;
+            this.Azimuth = azimuth;
+            this.ReverseAzimuth = reverseAzimuth;
         }
 
         /// <summary>Ellipsoidal distance (in meters).</summary>
-        public double EllipsoidalDistanceMeters
-        {
-            get { return this.ellipsoidalDistanceMeters; }
-        }
+        public double EllipsoidalDistanceMeters { get; }
 
         /// <summary>
         /// Get the azimuth.  This is angle from north from start to end.
         /// </summary>
-        public Angle Azimuth
-        {
-            get { return this.azimuth; }
-        }
+        public Angle Azimuth { get; }
 
         /// <summary>
         /// Get the reverse azimuth.  This is angle from north from end to start.
         /// </summary>
-        public Angle ReverseAzimuth
-        {
-            get { return this.reverseAzimuth; }
-        }
+        public Angle ReverseAzimuth { get; }
 
-        public override int GetHashCode()
-        {
-            // TODO: consider just leaving it at ellipsoidal distance...
-            int hashCode = 17;
+        // TODO: consider just leaving it at ellipsoidal distance...
+        public static int GetHashCode(GeodeticCurve value) => HashCodeBuilder.Seed
+                                                                             .HashWith(value.EllipsoidalDistanceMeters)
+                                                                             .HashWith(value.Azimuth)
+                                                                             .HashWith(value.ReverseAzimuth);
 
-            hashCode = hashCode * 31 + this.ellipsoidalDistanceMeters.GetHashCode();
-            hashCode = hashCode * 31 + this.azimuth.GetHashCode();
-            hashCode = hashCode * 31 + this.reverseAzimuth.GetHashCode();
+        public static bool Equals(GeodeticCurve first, GeodeticCurve second) => first.EllipsoidalDistanceMeters == second.EllipsoidalDistanceMeters &&
+                                                                                first.Azimuth == second.Azimuth &&
+                                                                                first.ReverseAzimuth == second.ReverseAzimuth;
 
-            return hashCode;
-        }
+        public static string ToString(GeodeticCurve value) => String.Format(CultureInfo.InvariantCulture,
+                                                                            "GeodeticCurve[EllipsoidalDistanceMeters={0}, Azimuth={1}, ReverseAzimuth={2}]",
+                                                                            value.EllipsoidalDistanceMeters,
+                                                                            value.Azimuth,
+                                                                            value.ReverseAzimuth);
 
-        public override bool Equals(object obj)
-        {
-            return obj is GeodeticCurve &&
-                   this.Equals((GeodeticCurve)obj);
-        }
-
-        public bool Equals(GeodeticCurve other)
-        {
-            return this.ellipsoidalDistanceMeters == other.ellipsoidalDistanceMeters &&
-                   this.azimuth == other.azimuth &&
-                   this.reverseAzimuth == other.reverseAzimuth;
-        }
+        public override int GetHashCode() => GetHashCode(this);
+        public override bool Equals(object obj) => obj is GeodeticCurve && Equals(this, (GeodeticCurve)obj);
+        public bool Equals(GeodeticCurve other) => Equals(this, other);
 
         /// <summary>
         /// Get curve as a string.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "GeodeticCurve[EllipsoidalDistanceMeters={0}, Azimuth={1}, ReverseAzimuth={2}]",
-                                 this.ellipsoidalDistanceMeters,
-                                 this.azimuth,
-                                 this.reverseAzimuth);
-        }
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
         private GeodeticCurve(SerializationInfo info, StreamingContext context)
         {
-            this.ellipsoidalDistanceMeters = info.GetDouble("ellipsoidalDistanceMeters");
+            this.EllipsoidalDistanceMeters = info.GetDouble("ellipsoidalDistanceMeters");
 
             double azimuthRadians = info.GetDouble("azimuthRadians");
             double reverseAzimuthRadians = info.GetDouble("reverseAzimuthRadians");
 
-            this.azimuth = Angle.FromRadians(azimuthRadians);
-            this.reverseAzimuth = Angle.FromRadians(reverseAzimuthRadians);
+            this.Azimuth = Angle.FromRadians(azimuthRadians);
+            this.ReverseAzimuth = Angle.FromRadians(reverseAzimuthRadians);
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("ellipsoidalDistanceMeters", this.ellipsoidalDistanceMeters);
+            info.AddValue("ellipsoidalDistanceMeters", this.EllipsoidalDistanceMeters);
 
-            info.AddValue("azimuthRadians", this.azimuth.Radians);
-            info.AddValue("reverseAzimuthRadians", this.reverseAzimuth.Radians);
+            info.AddValue("azimuthRadians", this.Azimuth.Radians);
+            info.AddValue("reverseAzimuthRadians", this.ReverseAzimuth.Radians);
         }
 
         #endregion
 
         #region Operators
 
-        public static bool operator ==(GeodeticCurve lhs, GeodeticCurve rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(GeodeticCurve lhs, GeodeticCurve rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
+        public static bool operator ==(GeodeticCurve lhs, GeodeticCurve rhs) => Equals(lhs, rhs);
+        public static bool operator !=(GeodeticCurve lhs, GeodeticCurve rhs) => !Equals(lhs, rhs);
 
         #endregion
     }

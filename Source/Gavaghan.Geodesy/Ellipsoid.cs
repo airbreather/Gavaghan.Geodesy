@@ -19,22 +19,6 @@ namespace Gavaghan.Geodesy
     [Serializable]
     public struct Ellipsoid : IEquatable<Ellipsoid>, ISerializable
     {
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Semi major axis (meters).</summary>
-        private double semiMajorAxisMeters;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Semi minor axis (meters).</summary>
-        private double semiMinorAxisMeters;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Flattening.</summary>
-        private double flattening;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Inverse flattening.</summary>
-        private double inverseFlattening;
-
         /// <summary>
         /// Construct a new Ellipsoid.  This is private to ensure the values are
         /// consistent (flattening = 1.0 / inverseFlattening).  Use the methods 
@@ -46,10 +30,10 @@ namespace Gavaghan.Geodesy
         /// <param name="inverseFlattening"></param>
         private Ellipsoid(double semiMajorAxisMeters, double semiMinorAxisMeters, double flattening, double inverseFlattening)
         {
-            this.semiMajorAxisMeters = semiMajorAxisMeters;
-            this.semiMinorAxisMeters = semiMinorAxisMeters;
-            this.flattening = flattening;
-            this.inverseFlattening = inverseFlattening;
+            this.SemiMajorAxisMeters = semiMajorAxisMeters;
+            this.SemiMinorAxisMeters = semiMinorAxisMeters;
+            this.Flattening = flattening;
+            this.InverseFlattening = inverseFlattening;
         }
 
         #region Reference Ellipsoids
@@ -109,100 +93,69 @@ namespace Gavaghan.Geodesy
         }
 
         /// <summary>Get semi major axis (meters).</summary>
-        public double SemiMajorAxisMeters
-        {
-            get { return semiMajorAxisMeters; }
-        }
+        public double SemiMajorAxisMeters { get; }
 
         /// <summary>Get semi minor axis (meters).</summary>
-        public double SemiMinorAxisMeters
-        {
-            get { return semiMinorAxisMeters; }
-        }
+        public double SemiMinorAxisMeters { get; }
 
         /// <summary>Get flattening.</summary>
-        public double Flattening
-        {
-            get { return flattening; }
-        }
+        public double Flattening { get; }
 
         /// <summary>Get inverse flattening.</summary>
-        public double InverseFlattening
-        {
-            get { return inverseFlattening; }
-        }
+        public double InverseFlattening { get; }
 
-        public override int GetHashCode()
-        {
-            int hashCode = 17;
+        // others are derived from these values.
+        public static int GetHashCode(Ellipsoid value) => HashCodeBuilder.Seed
+                                                                         .HashWith(value.SemiMajorAxisMeters)
+                                                                         .HashWith(value.Flattening);
 
-            // others are derived from these values.
-            hashCode = hashCode * 31 + this.semiMajorAxisMeters.GetHashCode();
-            hashCode = hashCode * 31 + this.flattening.GetHashCode();
+        public static bool Equals(Ellipsoid first, Ellipsoid second) => first.SemiMajorAxisMeters == second.SemiMajorAxisMeters &&
+                                                                        first.Flattening == second.Flattening;
 
-            return hashCode;
-        }
+        public static string ToString(Ellipsoid value) => String.Format(CultureInfo.InvariantCulture,
+                                                                        "Ellipsoid[SemiMajorAxisMeters={0}, Flattening={1}, SemiMinorAxisMeters={2}, InverseFlattening={3}]",
+                                                                        value.SemiMajorAxisMeters,
+                                                                        value.Flattening,
+                                                                        value.SemiMinorAxisMeters,
+                                                                        value.InverseFlattening);
 
-        public override bool Equals(object obj)
-        {
-            return obj is Ellipsoid &&
-                   this.Equals((Ellipsoid)obj);
-        }
-
-        public bool Equals(Ellipsoid other)
-        {
-            // others are derived from these values.
-            return this.semiMajorAxisMeters == other.semiMajorAxisMeters &&
-                   this.flattening == other.flattening;
-        }
-
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "Ellipsoid[SemiMajorAxisMeters={0}, Flattening={1}, SemiMinorAxisMeters={2}, InverseFlattening={3}]",
-                                 this.semiMajorAxisMeters,
-                                 this.flattening,
-                                 this.semiMinorAxisMeters,
-                                 this.inverseFlattening);
-        }
+        public override bool Equals(object obj) => obj is Ellipsoid && Equals(this, (Ellipsoid)obj);
+        public bool Equals(Ellipsoid other) => Equals(this, other);
+        public override int GetHashCode() => GetHashCode(this);
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
         private Ellipsoid(SerializationInfo info, StreamingContext context)
         {
-            this.semiMajorAxisMeters = info.GetDouble("semiMajorAxisMeters");
-            this.flattening = info.GetDouble("flattening");
+            this.SemiMajorAxisMeters = info.GetDouble("semiMajorAxisMeters");
+            this.Flattening = info.GetDouble("flattening");
 
             // Worth considering that these two can be MATHEMATICALLY derived from the other two,
             // but we could get different results if we tried it, depending on how we were created.
-            this.semiMinorAxisMeters = info.GetDouble("semiMinorAxisMeters");
-            this.inverseFlattening = info.GetDouble("inverseFlattening");
+            this.SemiMinorAxisMeters = info.GetDouble("semiMinorAxisMeters");
+            this.InverseFlattening = info.GetDouble("inverseFlattening");
         }
 
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        private static void GetObjectData(Ellipsoid value, SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("semiMajorAxisMeters", this.semiMajorAxisMeters);
-            info.AddValue("flattening", this.flattening);
+            info.AddValue("semiMajorAxisMeters", value.SemiMajorAxisMeters);
+            info.AddValue("flattening", value.Flattening);
 
             // Worth considering that these two can be MATHEMATICALLY derived from the other two,
             // but we could get different results if we tried it, depending on how we were created.
-            info.AddValue("semiMinorAxisMeters", this.semiMinorAxisMeters);
-            info.AddValue("inverseFlattening", this.inverseFlattening);
+            info.AddValue("semiMinorAxisMeters", value.SemiMinorAxisMeters);
+            info.AddValue("inverseFlattening", value.InverseFlattening);
         }
+
+        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => GetObjectData(this, info, context);
 
         #endregion
 
         #region Operators
 
-        public static bool operator ==(Ellipsoid lhs, Ellipsoid rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(Ellipsoid lhs, Ellipsoid rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
+        public static bool operator ==(Ellipsoid lhs, Ellipsoid rhs) => Equals(lhs, rhs);
+        public static bool operator !=(Ellipsoid lhs, Ellipsoid rhs) => !Equals(lhs, rhs);
 
         #endregion
     }

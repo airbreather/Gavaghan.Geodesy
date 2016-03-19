@@ -20,14 +20,6 @@ namespace Gavaghan.Geodesy
     [Serializable]
     public struct GlobalPosition : IComparable<GlobalPosition>, IComparable, IEquatable<GlobalPosition>, ISerializable
     {
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Global coordinates.</summary>
-        private GlobalCoordinates coordinates;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Elevation, in meters, above the surface of the ellipsoid.</summary>
-        private double elevationMeters;
-
         /// <summary>
         /// Creates a new instance of GlobalPosition for a position on the surface of
         /// the reference ellipsoid.
@@ -45,35 +37,60 @@ namespace Gavaghan.Geodesy
         /// <param name="elevationMeters">elevation, in meters, above the reference ellipsoid.</param>
         public GlobalPosition(GlobalCoordinates coords, double elevationMeters)
         {
-            this.coordinates = coords;
-            this.elevationMeters = elevationMeters;
+            this.Coordinates = coords;
+            this.ElevationMeters = elevationMeters;
         }
 
         /// <summary>Get global coordinates.</summary>
-        public GlobalCoordinates Coordinates
-        {
-            get { return this.coordinates; }
-        }
+        public GlobalCoordinates Coordinates { get; }
 
         /// <summary>Get latitude.</summary>
-        public Angle Latitude
-        {
-            get { return this.coordinates.Latitude; }
-        }
+        public Angle Latitude => this.Coordinates.Latitude;
 
         /// <summary>Get longitude.</summary>
-        public Angle Longitude
-        {
-            get { return this.coordinates.Longitude; }
-        }
+        public Angle Longitude => this.Coordinates.Longitude;
 
         /// <summary>
         /// Get elevation, in meters, above the surface of the reference ellipsoid.
         /// </summary>
-        public double ElevationMeters
+        public double ElevationMeters { get; }
+
+        public static int GetHashCode(GlobalPosition value) => HashCodeBuilder.Seed
+                                                                              .HashWith(value.Coordinates)
+                                                                              .HashWith(value.ElevationMeters);
+
+        public static bool Equals(GlobalPosition first, GlobalPosition second) => GlobalCoordinates.Equals(first.Coordinates, second.Coordinates) &&
+                                                                                  first.ElevationMeters == second.ElevationMeters;
+
+        public static int Compare(GlobalPosition first, GlobalPosition second)
         {
-            get { return this.elevationMeters; }
+            int a = GlobalCoordinates.Compare(first.Coordinates, second.Coordinates);
+
+            return a == 0
+                ? first.ElevationMeters.CompareTo(second.ElevationMeters)
+                : a;
         }
+
+        public static string ToString(GlobalPosition value) => String.Format(CultureInfo.InvariantCulture,
+                                                                             "GlobalPosition[Coordinates={0}, ElevationMeters={1}]",
+                                                                             value.Coordinates,
+                                                                             value.ElevationMeters);
+
+        /// <summary>
+        /// Calculate a hash code.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode() => GetHashCode(this);
+
+        /// <summary>
+        /// Compare this position to another object for equality.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj) => obj is GlobalPosition &&
+                                                   Equals(this, (GlobalPosition)obj);
+
+        public bool Equals(GlobalPosition other) => Equals(this, other);
 
         /// <summary>
         /// Compare this position to another.  Western longitudes are less than
@@ -90,7 +107,7 @@ namespace Gavaghan.Geodesy
                 throw new ArgumentException("Can only compare GlobalPositions with other GlobalPositions.", "obj");
             }
 
-            return this.CompareTo((GlobalPosition)obj);
+            return Compare(this, (GlobalPosition)obj);
         }
 
         /// <summary>
@@ -101,63 +118,19 @@ namespace Gavaghan.Geodesy
         /// </summary>
         /// <param name="other">instance to compare to</param>
         /// <returns>-1, 0, or +1 as per IComparable contract</returns>
-        public int CompareTo(GlobalPosition other)
-        {
-            int a = this.coordinates.CompareTo(other.coordinates);
-
-            return a == 0
-                ? this.elevationMeters.CompareTo(other.elevationMeters)
-                : a;
-        }
-
-        /// <summary>
-        /// Calculate a hash code.
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            int hashCode = 17;
-
-            hashCode = hashCode * 31 + this.coordinates.GetHashCode();
-            hashCode = hashCode * 31 + this.elevationMeters.GetHashCode();
-
-            return hashCode;
-        }
-
-        /// <summary>
-        /// Compare this position to another object for equality.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            return obj is GlobalPosition &&
-                   this.Equals((GlobalPosition)obj);
-        }
-
-        public bool Equals(GlobalPosition other)
-        {
-            return this.coordinates.Equals(other.coordinates) &&
-                   this.elevationMeters == other.elevationMeters;
-        }
+        public int CompareTo(GlobalPosition other) => Compare(this, other);
 
         /// <summary>
         /// Get position as a string.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "GlobalPosition[Coordinates={0}, ElevationMeters={1}]",
-                                 this.coordinates,
-                                 this.elevationMeters);
-        }
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
         private GlobalPosition(SerializationInfo info, StreamingContext context)
         {
-            this.elevationMeters = info.GetDouble("elevationMeters");
+            this.ElevationMeters = info.GetDouble("elevationMeters");
 
             double longitudeRadians = info.GetDouble("longitudeRadians");
             double latitudeRadians = info.GetDouble("latitudeRadians");
@@ -165,50 +138,27 @@ namespace Gavaghan.Geodesy
             Angle longitude = Angle.FromRadians(longitudeRadians);
             Angle latitude = Angle.FromRadians(latitudeRadians);
 
-            this.coordinates = new GlobalCoordinates(longitude, latitude);
+            this.Coordinates = new GlobalCoordinates(longitude, latitude);
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("elevationMeters", this.elevationMeters);
+            info.AddValue("elevationMeters", this.ElevationMeters);
 
-            info.AddValue("longitudeRadians", this.coordinates.Longitude.Radians);
-            info.AddValue("latitudeRadians", this.coordinates.Latitude.Radians);
+            info.AddValue("longitudeRadians", this.Coordinates.Longitude.Radians);
+            info.AddValue("latitudeRadians", this.Coordinates.Latitude.Radians);
         }
 
         #endregion
 
         #region Operators
 
-        public static bool operator ==(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        public static bool operator <(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return lhs.CompareTo(rhs) < 0;
-        }
-
-        public static bool operator <=(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return lhs.CompareTo(rhs) <= 0;
-        }
-
-        public static bool operator >(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return lhs.CompareTo(rhs) > 0;
-        }
-
-        public static bool operator >=(GlobalPosition lhs, GlobalPosition rhs)
-        {
-            return lhs.CompareTo(rhs) >= 0;
-        }
+        public static bool operator ==(GlobalPosition lhs, GlobalPosition rhs) => Equals(lhs, rhs);
+        public static bool operator !=(GlobalPosition lhs, GlobalPosition rhs) => !Equals(lhs, rhs);
+        public static bool operator <(GlobalPosition lhs, GlobalPosition rhs) => Compare(lhs, rhs) < 0;
+        public static bool operator <=(GlobalPosition lhs, GlobalPosition rhs) => Compare(lhs, rhs) <= 0;
+        public static bool operator >(GlobalPosition lhs, GlobalPosition rhs) => Compare(lhs, rhs) > 0;
+        public static bool operator >=(GlobalPosition lhs, GlobalPosition rhs) => Compare(lhs, rhs) >= 0;
 
         #endregion
     }

@@ -20,18 +20,6 @@ namespace Gavaghan.Geodesy
     [Serializable]
     public struct GeodeticMeasurement : IEquatable<GeodeticMeasurement>, ISerializable
     {
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>The average geodetic curve.</summary>
-        private GeodeticCurve averageCurve;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>The elevation change, in meters, going from the starting to the ending point.</summary>
-        private double elevationChangeMeters;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>The distance travelled, in meters, going from one point to the next.</summary>
-        private double p2pMeters;
-
         /// <summary>
         /// Creates a new instance of GeodeticMeasurement.
         /// </summary>
@@ -41,134 +29,96 @@ namespace Gavaghan.Geodesy
         {
             double ellipsoidalDistanceMeters = averageCurve.EllipsoidalDistanceMeters;
 
-            this.averageCurve = averageCurve;
-            this.elevationChangeMeters = elevationChangeMeters;
-            this.p2pMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
+            this.AverageCurve = averageCurve;
+            this.ElevationChangeMeters = elevationChangeMeters;
+            this.PointToPointDistanceMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
         }
 
         /// <summary>
         /// Get the average geodetic curve.  This is the geodetic curve as measured
         /// at the average elevation between two points.
         /// </summary>
-        public GeodeticCurve AverageCurve
-        {
-            get { return averageCurve; }
-        }
+        public GeodeticCurve AverageCurve { get; }
 
         /// <summary>
         /// Get the ellipsoidal distance (in meters).  This is the length of the average geodetic
         /// curve.  For actual point-to-point distance, use PointToPointDistance property.
         /// </summary>
-        public double EllipsoidalDistanceMeters
-        {
-            get { return averageCurve.EllipsoidalDistanceMeters; }
-        }
+        public double EllipsoidalDistanceMeters => this.AverageCurve.EllipsoidalDistanceMeters;
 
         /// <summary>
         /// Get the azimuth.  This is angle from north from start to end.
         /// </summary>
-        public Angle Azimuth
-        {
-            get { return averageCurve.Azimuth; }
-        }
+        public Angle Azimuth => this.AverageCurve.Azimuth;
 
         /// <summary>
         /// Get the reverse azimuth.  This is angle from north from end to start.
         /// </summary>
-        public Angle ReverseAzimuth
-        {
-            get { return averageCurve.ReverseAzimuth; }
-        }
+        public Angle ReverseAzimuth => this.AverageCurve.ReverseAzimuth;
 
         /// <summary>
         /// Get the elevation change, in meters, going from the starting to the ending point.
         /// </summary>
-        public double ElevationChangeMeters
-        {
-            get { return elevationChangeMeters; }
-        }
+        public double ElevationChangeMeters { get; }
 
         /// <summary>
         /// Get the distance travelled, in meters, going from one point to the next.
         /// </summary>
-        public double PointToPointDistanceMeters
-        {
-            get { return p2pMeters; }
-        }
+        public double PointToPointDistanceMeters { get; }
 
-        public override int GetHashCode()
-        {
-            // p2p is a derived metric, no need to test.
-            int hashCode = 17;
+        // p2p is a derived metric, no need to test.
+        public static int GetHashCode(GeodeticMeasurement value) => HashCodeBuilder.Seed
+                                                                                   .HashWith(value.AverageCurve)
+                                                                                   .HashWith(value.ElevationChangeMeters);
 
-            hashCode = hashCode * 31 + this.averageCurve.GetHashCode();
-            hashCode = hashCode * 31 + this.elevationChangeMeters.GetHashCode();
+        public static bool Equals(GeodeticMeasurement first, GeodeticMeasurement second) => first.AverageCurve == second.AverageCurve &&
+                                                                                            first.ElevationChangeMeters == second.ElevationChangeMeters;
 
-            return hashCode;
-        }
+        public static string ToString(GeodeticMeasurement value) => String.Format(CultureInfo.InvariantCulture,
+                                                                                  "GeodeticMeasurement[AverageCurve={0}, ElevationChangeMeters={1}, PointToPointDistanceMeters={2}]",
+                                                                                  value.AverageCurve,
+                                                                                  value.ElevationChangeMeters,
+                                                                                  value.PointToPointDistanceMeters);
 
-        public override bool Equals(object obj)
-        {
-            return obj is GeodeticMeasurement &&
-                   this.Equals((GeodeticMeasurement)obj);
-        }
-
-        public bool Equals(GeodeticMeasurement other)
-        {
-            // p2p is a derived metric, no need to test.
-            return this.averageCurve == other.averageCurve &&
-                   this.elevationChangeMeters == other.elevationChangeMeters;
-        }
+        public override int GetHashCode() => GetHashCode(this);
+        public override bool Equals(object obj) => obj is GeodeticMeasurement && Equals(this, (GeodeticMeasurement)obj);
+        public bool Equals(GeodeticMeasurement other) => Equals(this, other);
 
         /// <summary>
         /// Get the GeodeticMeasurement as a string
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "GeodeticMeasurement[AverageCurve={0}, ElevationChangeMeters={1}, PointToPointDistanceMeters={2}]",
-                                 this.averageCurve,
-                                 this.elevationChangeMeters,
-                                 this.p2pMeters);
-        }
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
         private GeodeticMeasurement(SerializationInfo info, StreamingContext context)
         {
-            this.elevationChangeMeters = info.GetDouble("elevationChangeMeters");
+            double elevationChangeMeters = this.ElevationChangeMeters = info.GetDouble("elevationChangeMeters");
 
             double ellipsoidalDistanceMeters = info.GetDouble("averageCurveEllipsoidalDistanceMeters");
             double azimuthRadians = info.GetDouble("averageCurveAzimuthRadians");
             double reverseAzimuthRadians = info.GetDouble("averageCurveReverseAzimuthRadians");
 
-            this.averageCurve = new GeodeticCurve(ellipsoidalDistanceMeters, Angle.FromRadians(azimuthRadians), Angle.FromRadians(reverseAzimuthRadians));
-            this.p2pMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
+            this.AverageCurve = new GeodeticCurve(ellipsoidalDistanceMeters, Angle.FromRadians(azimuthRadians), Angle.FromRadians(reverseAzimuthRadians));
+            this.PointToPointDistanceMeters = Math.Sqrt((ellipsoidalDistanceMeters * ellipsoidalDistanceMeters) + (elevationChangeMeters * elevationChangeMeters));
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("elevationChangeMeters", this.elevationChangeMeters);
+            info.AddValue("elevationChangeMeters", this.ElevationChangeMeters);
 
-            info.AddValue("averageCurveEllipsoidalDistanceMeters", this.averageCurve.EllipsoidalDistanceMeters);
-            info.AddValue("averageCurveAzimuthRadians", this.averageCurve.Azimuth.Radians);
-            info.AddValue("averageCurveReverseAzimuthRadians", this.averageCurve.ReverseAzimuth.Radians);
+            info.AddValue("averageCurveEllipsoidalDistanceMeters", this.AverageCurve.EllipsoidalDistanceMeters);
+            info.AddValue("averageCurveAzimuthRadians", this.AverageCurve.Azimuth.Radians);
+            info.AddValue("averageCurveReverseAzimuthRadians", this.AverageCurve.ReverseAzimuth.Radians);
         }
 
         #endregion
 
         #region Operators
 
-        public static bool operator ==(GeodeticMeasurement lhs, GeodeticMeasurement rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(GeodeticMeasurement lhs, GeodeticMeasurement rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
+        public static bool operator ==(GeodeticMeasurement lhs, GeodeticMeasurement rhs) => Equals(lhs, rhs);
+        public static bool operator !=(GeodeticMeasurement lhs, GeodeticMeasurement rhs) => !Equals(lhs, rhs);
 
         #endregion
     }

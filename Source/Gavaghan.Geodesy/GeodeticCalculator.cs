@@ -50,11 +50,7 @@ namespace Gavaghan.Geodesy
         /// <param name="distanceMeters">distance to travel (meters)</param>
         /// <param name="endBearing">bearing at destination</param>
         /// <returns></returns>
-        public GlobalCoordinates CalculateEndingGlobalCoordinates(Ellipsoid ellipsoid, GlobalCoordinates start, Angle startBearing, double distanceMeters, out Angle endBearing)
-        {
-            return this.CalculateEndingGlobalCoordinates(ellipsoid, start, startBearing, distanceMeters, StandardTolerance, out endBearing);
-        }
-
+        public GlobalCoordinates CalculateEndingGlobalCoordinates(Ellipsoid ellipsoid, GlobalCoordinates start, Angle startBearing, double distanceMeters, out Angle endBearing) => this.CalculateEndingGlobalCoordinates(ellipsoid, start, startBearing, distanceMeters, StandardTolerance, out endBearing);
         internal GlobalCoordinates CalculateEndingGlobalCoordinates(Ellipsoid ellipsoid, GlobalCoordinates start, Angle startBearing, double distanceMeters, double tolerance, out Angle endBearing)
         {
             double a = ellipsoid.SemiMajorAxisMeters;
@@ -165,11 +161,7 @@ namespace Gavaghan.Geodesy
         /// <param name="start">starting coordinates</param>
         /// <param name="end">ending coordinates </param>
         /// <returns></returns>
-        public GeodeticCurve CalculateGeodeticCurve(Ellipsoid ellipsoid, GlobalCoordinates start, GlobalCoordinates end)
-        {
-            return this.CalculateGeodeticCurve(ellipsoid, start, end, StandardTolerance);
-        }
-
+        public GeodeticCurve CalculateGeodeticCurve(Ellipsoid ellipsoid, GlobalCoordinates start, GlobalCoordinates end) => this.CalculateGeodeticCurve(ellipsoid, start, end, StandardTolerance);
         internal GeodeticCurve CalculateGeodeticCurve(Ellipsoid ellipsoid, GlobalCoordinates start, GlobalCoordinates end, double tolerance)
         {
             //
@@ -342,11 +334,7 @@ namespace Gavaghan.Geodesy
         /// <param name="start">starting position</param>
         /// <param name="end">ending position</param>
         /// <returns></returns>
-        public GeodeticMeasurement CalculateGeodeticMeasurement(Ellipsoid refEllipsoid, GlobalPosition start, GlobalPosition end)
-        {
-            return this.CalculateGeodeticMeasurement(refEllipsoid, start, end, StandardTolerance);
-        }
-
+        public GeodeticMeasurement CalculateGeodeticMeasurement(Ellipsoid refEllipsoid, GlobalPosition start, GlobalPosition end) => this.CalculateGeodeticMeasurement(refEllipsoid, start, end, StandardTolerance);
         internal GeodeticMeasurement CalculateGeodeticMeasurement(Ellipsoid refEllipsoid, GlobalPosition start, GlobalPosition end, double tolerance)
         {
             // get the coordinates

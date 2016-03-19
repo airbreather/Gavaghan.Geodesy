@@ -33,44 +33,27 @@ namespace Gavaghan.Geodesy
         /// <summary>Degrees/Radians conversion constant.</summary>
         private const double PiOver180 = Math.PI / 180;
 
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Angle value in radians.</summary>
-        private double radians;
-
         /// <summary>
         /// Construct a new Angle from a measurement in radians.
         /// </summary>
         /// <param name="degrees">angle measurement</param>
         private Angle(double radians)
         {
-            this.radians = radians;
+            this.Radians = radians;
         }
 
         /// <summary>
         /// Get angle measured in degrees.
         /// </summary>
-        public double Degrees
-        {
-            get { return this.radians / PiOver180; }
-        }
+        public double Degrees => this.Radians / PiOver180;
 
         /// <summary>
         /// Get angle measured in radians.
         /// </summary>
-        public double Radians
-        {
-            get { return this.radians; }
-        }
+        public double Radians { get; }
 
-        public static Angle FromRadians(double radians)
-        {
-            return new Angle(radians);
-        }
-
-        public static Angle FromDegrees(double degrees)
-        {
-            return new Angle(degrees * PiOver180);
-        }
+        public static Angle FromRadians(double radians) => new Angle(radians);
+        public static Angle FromDegrees(double degrees) => new Angle(degrees * PiOver180);
 
         public static Angle FromDegreesAndMinutes(int degrees, double minutes)
         {
@@ -91,16 +74,9 @@ namespace Gavaghan.Geodesy
         /// <summary>
         /// Get the absolute value of the angle.
         /// </summary>
-        public static Angle Abs(Angle angle)
-        {
-            double r = Math.Abs(angle.radians);
-            return new Angle(r);
-        }
+        public static Angle Abs(Angle angle) => new Angle(Math.Abs(angle.Radians));
 
-        public static bool IsNaN(Angle angle)
-        {
-            return Double.IsNaN(angle.radians);
-        }
+        public static bool IsNaN(Angle angle) => Double.IsNaN(angle.Radians);
 
         /// <summary>
         /// Compare this angle to another angle.
@@ -122,19 +98,13 @@ namespace Gavaghan.Geodesy
         /// </summary>
         /// <param name="other">other angle to compare to.</param>
         /// <returns>result according to IComparable contract/></returns>
-        public int CompareTo(Angle other)
-        {
-            return this.radians.CompareTo(other.radians);
-        }
+        public int CompareTo(Angle other) => this.Radians.CompareTo(other.Radians);
 
         /// <summary>
         /// Calculate a hash code for the angle.
         /// </summary>
         /// <returns>hash code</returns>
-        public override int GetHashCode()
-        {
-            return this.radians.GetHashCode();
-        }
+        public override int GetHashCode() => this.Radians.GetHashCode();
 
         /// <summary>
         /// Compare this Angle to another Angle for equality.  Angle comparisons
@@ -143,11 +113,7 @@ namespace Gavaghan.Geodesy
         /// </summary>
         /// <param name="obj">object to compare to</param>
         /// <returns>'true' if angles are equal</returns>
-        public override bool Equals(object obj)
-        {
-            return obj is Angle &&
-                   this.Equals((Angle)obj);
-        }
+        public override bool Equals(object obj) => obj is Angle && this.Equals((Angle)obj);
 
         /// <summary>
         /// Compare this Angle to another Angle for equality.
@@ -157,78 +123,41 @@ namespace Gavaghan.Geodesy
         /// </summary>
         /// <param name="other">Angle to compare to</param>
         /// <returns>'true' if angles are equal</returns>
-        public bool Equals(Angle other)
-        {
-            return this.radians == other.radians;
-        }
+        public bool Equals(Angle other) => this.Radians == other.Radians;
 
         /// <summary>
         /// Get coordinates as a string.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "Angle[Degrees={0}, Radians={1}]",
-                                 this.Degrees,
-                                 this.radians);
-        }
+        public override string ToString() => String.Format(CultureInfo.InvariantCulture,
+                                                           "Angle[Degrees={0}, Radians={1}]",
+                                                           this.Degrees,
+                                                           this.Radians);
 
         #region Serialization / Deserialization
 
         private Angle(SerializationInfo info, StreamingContext context)
         {
-            this.radians = info.GetDouble("radians");
+            this.Radians = info.GetDouble("radians");
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("radians", this.radians);
+            info.AddValue("radians", this.Radians);
         }
 
         #endregion
 
         #region Operators
 
-        public static Angle operator +(Angle lhs, Angle rhs)
-        {
-            return new Angle(lhs.radians + rhs.radians);
-        }
-
-        public static Angle operator -(Angle lhs, Angle rhs)
-        {
-            return new Angle(lhs.radians - rhs.radians);
-        }
-
-        public static bool operator ==(Angle lhs, Angle rhs)
-        {
-            return lhs.radians == rhs.radians;
-        }
-
-        public static bool operator !=(Angle lhs, Angle rhs)
-        {
-            return lhs.radians != rhs.radians;
-        }
-
-        public static bool operator <(Angle lhs, Angle rhs)
-        {
-            return lhs.radians < rhs.radians;
-        }
-
-        public static bool operator <=(Angle lhs, Angle rhs)
-        {
-            return lhs.radians <= rhs.radians;
-        }
-
-        public static bool operator >(Angle lhs, Angle rhs)
-        {
-            return lhs.radians > rhs.radians;
-        }
-
-        public static bool operator >=(Angle lhs, Angle rhs)
-        {
-            return lhs.radians >= rhs.radians;
-        }
+        public static Angle operator +(Angle lhs, Angle rhs) => new Angle(lhs.Radians + rhs.Radians);
+        public static Angle operator -(Angle lhs, Angle rhs) => new Angle(lhs.Radians - rhs.Radians);
+        public static bool operator ==(Angle lhs, Angle rhs) => lhs.Radians == rhs.Radians;
+        public static bool operator !=(Angle lhs, Angle rhs) => lhs.Radians != rhs.Radians;
+        public static bool operator <(Angle lhs, Angle rhs) => lhs.Radians < rhs.Radians;
+        public static bool operator <=(Angle lhs, Angle rhs) => lhs.Radians <= rhs.Radians;
+        public static bool operator >(Angle lhs, Angle rhs) => lhs.Radians > rhs.Radians;
+        public static bool operator >=(Angle lhs, Angle rhs) => lhs.Radians >= rhs.Radians;
 
         #endregion
     }

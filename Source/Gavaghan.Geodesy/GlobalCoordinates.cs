@@ -31,14 +31,6 @@ namespace Gavaghan.Geodesy
         private const double NegativePiOver2 = -PiOver2;
         private const double NegativeTwoPi = -TwoPi;
 
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Latitude.  Negative latitude is southern hemisphere.</summary>
-        private Angle latitude;
-
-        // intentionally NOT readonly, for performance reasons.
-        /// <summary>Longitude.  Negative longitude is western hemisphere.</summary>
-        private Angle longitude;
-
         /// <summary>
         /// Construct a new GlobalCoordinates.  Angles will be canonicalized.
         /// </summary>
@@ -46,8 +38,8 @@ namespace Gavaghan.Geodesy
         /// <param name="longitude">longitude</param>
         public GlobalCoordinates(Angle latitude, Angle longitude)
         {
-            this.latitude = latitude;
-            this.longitude = longitude;
+            this.Latitude = latitude;
+            this.Longitude = longitude;
             this.Canonicalize();
         }
 
@@ -55,19 +47,13 @@ namespace Gavaghan.Geodesy
         /// Get latitude.  The latitude value will be canonicalized (which might
         /// result in a change to the longitude). Negative latitude is southern hemisphere.
         /// </summary>
-        public Angle Latitude
-        {
-            get { return latitude; }
-        }
+        public Angle Latitude { get; private set; }
 
         /// <summary>
         /// Get longitude.  The longitude value will be canonicalized. Negative
         /// longitude is western hemisphere.
         /// </summary>
-        public Angle Longitude
-        {
-            get { return longitude; }
-        }
+        public Angle Longitude { get; private set; }
 
         /// <summary>
         /// Canonicalize the current latitude and longitude values such that:
@@ -84,8 +70,8 @@ namespace Gavaghan.Geodesy
             // completely capable of continuing to walk in that same straight line.  A little
             // farther (relatively speaking), and you've walked 181 degrees of latitude, but now
             // you're walking on the opposite meridian.
-            double latitudeRadians = this.latitude.Radians;
-            double longitudeRadians = this.longitude.Radians;
+            double latitudeRadians = this.Latitude.Radians;
+            double longitudeRadians = this.Longitude.Radians;
 
             latitudeRadians = (latitudeRadians + Math.PI) % TwoPi;
             if (latitudeRadians < 0) latitudeRadians += TwoPi;
@@ -106,9 +92,51 @@ namespace Gavaghan.Geodesy
             if (longitudeRadians <= 0) longitudeRadians += TwoPi;
             longitudeRadians -= Math.PI;
 
-            this.latitude = Angle.FromRadians(latitudeRadians);
-            this.longitude = Angle.FromRadians(longitudeRadians);
+            this.Latitude = Angle.FromRadians(latitudeRadians);
+            this.Longitude = Angle.FromRadians(longitudeRadians);
         }
+
+        public static int GetHashCode(GlobalCoordinates value) => HashCodeBuilder.Seed
+                                                                                 .HashWith(value.Longitude)
+                                                                                 .HashWith(value.Latitude);
+
+        public static bool Equals(GlobalCoordinates first, GlobalCoordinates second) => first.Latitude == second.Latitude &&
+                                                                                        first.Longitude == second.Longitude;
+
+        public static int Compare(GlobalCoordinates first, GlobalCoordinates second)
+        {
+            int a = first.Longitude.CompareTo(second.Longitude);
+
+            return a == 0
+                ? first.Latitude.CompareTo(second.Latitude)
+                : a;
+        }
+
+        public static string ToString(GlobalCoordinates value) => String.Format(CultureInfo.InvariantCulture,
+                                                                                "GlobalCoordinates[Longitude={0}, Latitude={1}]",
+                                                                                value.Longitude,
+                                                                                value.Latitude);
+
+        /// <summary>
+        /// Get a hash code for these coordinates.
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode() => GetHashCode(this);
+
+        /// <summary>
+        /// Compare these coordinates to another object for equality.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj) => obj is GlobalCoordinates &&
+                                                   Equals(this, (GlobalCoordinates)obj);
+
+        /// <summary>
+        /// Compare these coordinates to another object for equality.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool Equals(GlobalCoordinates other) => Equals(this, other);
 
         /// <summary>
         /// Compare these coordinates to another set of coordiates.  Western
@@ -124,7 +152,7 @@ namespace Gavaghan.Geodesy
                 throw new ArgumentException("Can only compare GlobalCoordinates with other GlobalCoordinates.", "obj");
             }
 
-            return this.CompareTo((GlobalCoordinates)obj);
+            return Compare(this, (GlobalCoordinates)obj);
         }
 
         /// <summary>
@@ -134,62 +162,13 @@ namespace Gavaghan.Geodesy
         /// </summary>
         /// <param name="other">instance to compare to</param>
         /// <returns>-1, 0, or +1 as per IComparable contract</returns>
-        public int CompareTo(GlobalCoordinates other)
-        {
-            int a = this.longitude.CompareTo(other.longitude);
-
-            return a == 0
-                ? this.latitude.CompareTo(other.latitude)
-                : a;
-        }
-
-        /// <summary>
-        /// Get a hash code for these coordinates.
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            int hashCode = 17;
-
-            hashCode = hashCode * 31 + this.longitude.GetHashCode();
-            hashCode = hashCode * 31 + this.latitude.GetHashCode();
-
-            return hashCode;
-        }
-
-        /// <summary>
-        /// Compare these coordinates to another object for equality.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            return obj is GlobalCoordinates &&
-                   this.Equals((GlobalCoordinates)obj);
-        }
-
-        /// <summary>
-        /// Compare these coordinates to another object for equality.
-        /// </summary>
-        /// <param name="other"></param>
-        /// <returns></returns>
-        public bool Equals(GlobalCoordinates other)
-        {
-            return this.latitude == other.latitude &&
-                   this.longitude == other.longitude;
-        }
+        public int CompareTo(GlobalCoordinates other) => Compare(this, other);
 
         /// <summary>
         /// Get coordinates as a string.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "GlobalCoordinates[Longitude={0}, Latitude={1}]",
-                                 this.longitude,
-                                 this.latitude);
-        }
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
@@ -198,49 +177,26 @@ namespace Gavaghan.Geodesy
             double longitudeRadians = info.GetDouble("longitudeRadians");
             double latitudeRadians = info.GetDouble("latitudeRadians");
 
-            this.longitude = Angle.FromRadians(longitudeRadians);
-            this.latitude = Angle.FromRadians(latitudeRadians);
+            this.Longitude = Angle.FromRadians(longitudeRadians);
+            this.Latitude = Angle.FromRadians(latitudeRadians);
         }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("longitudeRadians", this.longitude.Radians);
-            info.AddValue("latitudeRadians", this.latitude.Radians);
+            info.AddValue("longitudeRadians", this.Longitude.Radians);
+            info.AddValue("latitudeRadians", this.Latitude.Radians);
         }
 
         #endregion
 
         #region Operators
 
-        public static bool operator ==(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        public static bool operator !=(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        public static bool operator <(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return lhs.CompareTo(rhs) < 0;
-        }
-
-        public static bool operator <=(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return lhs.CompareTo(rhs) <= 0;
-        }
-
-        public static bool operator >(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return lhs.CompareTo(rhs) > 0;
-        }
-
-        public static bool operator >=(GlobalCoordinates lhs, GlobalCoordinates rhs)
-        {
-            return lhs.CompareTo(rhs) >= 0;
-        }
+        public static bool operator ==(GlobalCoordinates lhs, GlobalCoordinates rhs) => Equals(lhs, rhs);
+        public static bool operator !=(GlobalCoordinates lhs, GlobalCoordinates rhs) => !Equals(lhs, rhs);
+        public static bool operator <(GlobalCoordinates lhs, GlobalCoordinates rhs) => Compare(lhs, rhs) < 0;
+        public static bool operator <=(GlobalCoordinates lhs, GlobalCoordinates rhs) => Compare(lhs, rhs) <= 0;
+        public static bool operator >(GlobalCoordinates lhs, GlobalCoordinates rhs) => Compare(lhs, rhs) > 0;
+        public static bool operator >=(GlobalCoordinates lhs, GlobalCoordinates rhs) => Compare(lhs, rhs) >= 0;
 
         #endregion
     }
