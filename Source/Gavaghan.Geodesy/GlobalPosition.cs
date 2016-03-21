@@ -8,7 +8,6 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
@@ -71,10 +70,7 @@ namespace Gavaghan.Geodesy
                 : a;
         }
 
-        public static string ToString(GlobalPosition value) => String.Format(CultureInfo.InvariantCulture,
-                                                                             "GlobalPosition[Coordinates={0}, ElevationMeters={1}]",
-                                                                             value.Coordinates,
-                                                                             value.ElevationMeters);
+        public static string ToString(GlobalPosition value) => $"GlobalPosition[Coordinates={value.Coordinates}, ElevationMeters={value.ElevationMeters}]";
 
         /// <summary>
         /// Calculate a hash code.
@@ -104,7 +100,7 @@ namespace Gavaghan.Geodesy
         {
             if (!(obj is GlobalPosition))
             {
-                throw new ArgumentException("Can only compare GlobalPositions with other GlobalPositions.", "obj");
+                throw new ArgumentException("Can only compare GlobalPositions with other GlobalPositions.", nameof(obj));
             }
 
             return Compare(this, (GlobalPosition)obj);

@@ -8,7 +8,6 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
@@ -57,11 +56,7 @@ namespace Gavaghan.Geodesy
                                                                                 first.Azimuth == second.Azimuth &&
                                                                                 first.ReverseAzimuth == second.ReverseAzimuth;
 
-        public static string ToString(GeodeticCurve value) => String.Format(CultureInfo.InvariantCulture,
-                                                                            "GeodeticCurve[EllipsoidalDistanceMeters={0}, Azimuth={1}, ReverseAzimuth={2}]",
-                                                                            value.EllipsoidalDistanceMeters,
-                                                                            value.Azimuth,
-                                                                            value.ReverseAzimuth);
+        public static string ToString(GeodeticCurve value) => $"GeodeticCurve[EllipsoidalDistanceMeters={value.EllipsoidalDistanceMeters}, Azimuth={value.Azimuth}, ReverseAzimuth={value.ReverseAzimuth}]";
 
         public override int GetHashCode() => GetHashCode(this);
         public override bool Equals(object obj) => obj is GeodeticCurve && Equals(this, (GeodeticCurve)obj);

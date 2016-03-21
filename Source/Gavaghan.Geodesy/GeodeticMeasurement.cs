@@ -8,7 +8,6 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
@@ -74,11 +73,7 @@ namespace Gavaghan.Geodesy
         public static bool Equals(GeodeticMeasurement first, GeodeticMeasurement second) => first.AverageCurve == second.AverageCurve &&
                                                                                             first.ElevationChangeMeters == second.ElevationChangeMeters;
 
-        public static string ToString(GeodeticMeasurement value) => String.Format(CultureInfo.InvariantCulture,
-                                                                                  "GeodeticMeasurement[AverageCurve={0}, ElevationChangeMeters={1}, PointToPointDistanceMeters={2}]",
-                                                                                  value.AverageCurve,
-                                                                                  value.ElevationChangeMeters,
-                                                                                  value.PointToPointDistanceMeters);
+        public static string ToString(GeodeticMeasurement value) => $"GeodeticMeasurement[AverageCurve={value.AverageCurve}, ElevationChangeMeters={value.ElevationChangeMeters}, PointToPointDistanceMeters={value.PointToPointDistanceMeters}]";
 
         public override int GetHashCode() => GetHashCode(this);
         public override bool Equals(object obj) => obj is GeodeticMeasurement && Equals(this, (GeodeticMeasurement)obj);

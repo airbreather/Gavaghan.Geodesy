@@ -8,7 +8,6 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
@@ -112,12 +111,7 @@ namespace Gavaghan.Geodesy
         public static bool Equals(Ellipsoid first, Ellipsoid second) => first.SemiMajorAxisMeters == second.SemiMajorAxisMeters &&
                                                                         first.Flattening == second.Flattening;
 
-        public static string ToString(Ellipsoid value) => String.Format(CultureInfo.InvariantCulture,
-                                                                        "Ellipsoid[SemiMajorAxisMeters={0}, Flattening={1}, SemiMinorAxisMeters={2}, InverseFlattening={3}]",
-                                                                        value.SemiMajorAxisMeters,
-                                                                        value.Flattening,
-                                                                        value.SemiMinorAxisMeters,
-                                                                        value.InverseFlattening);
+        public static string ToString(Ellipsoid value) => $"Ellipsoid[SemiMajorAxisMeters={value.SemiMajorAxisMeters}, Flattening={value.Flattening}, SemiMinorAxisMeters={value.SemiMinorAxisMeters}, InverseFlattening={value.InverseFlattening}]";
 
         public override bool Equals(object obj) => obj is Ellipsoid && Equals(this, (Ellipsoid)obj);
         public bool Equals(Ellipsoid other) => Equals(this, other);

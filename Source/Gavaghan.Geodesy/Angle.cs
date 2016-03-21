@@ -8,7 +8,6 @@
  * BitCoin tips graciously accepted at 1FB63FYQMy7hpC2ANVhZ5mSgAZEtY1aVLf
  */
 using System;
-using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace Gavaghan.Geodesy
@@ -78,6 +77,8 @@ namespace Gavaghan.Geodesy
 
         public static bool IsNaN(Angle angle) => Double.IsNaN(angle.Radians);
 
+        public static string ToString(Angle value) => $"Angle[Degrees={value.Degrees}, Radians={value.Radians}]";
+
         /// <summary>
         /// Compare this angle to another angle.
         /// </summary>
@@ -87,7 +88,7 @@ namespace Gavaghan.Geodesy
         {
             if (!(obj is Angle))
             {
-                throw new ArgumentException("Can only compare Angles with other Angles.", "obj");
+                throw new ArgumentException("Can only compare Angles with other Angles.", nameof(obj));
             }
 
             return this.CompareTo((Angle)obj);
@@ -129,10 +130,7 @@ namespace Gavaghan.Geodesy
         /// Get coordinates as a string.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() => String.Format(CultureInfo.InvariantCulture,
-                                                           "Angle[Degrees={0}, Radians={1}]",
-                                                           this.Degrees,
-                                                           this.Radians);
+        public override string ToString() => ToString(this);
 
         #region Serialization / Deserialization
 
